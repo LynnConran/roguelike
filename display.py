@@ -31,11 +31,6 @@ if __name__ == '__main__':
 
     else:
         main_window = curses.newwin(MAIN_WINDOW_SIZE_Y, MAIN_WINDOW_SIZE_X, 0, 0)
-        # main_window.addstr(0, 1, "This string gets printed at position (0, 0)")
-        # main_window.addstr(3, 1, "Try Russian text: Привет")  # Python 3 required for unicode
-        # main_window.addstr(4, 4, "X")
-        # main_window.addch(5, 5, "Y")
-        # main_window.addstr(11, 70, "long string seeing if it wraps around")
 
         map_list = map.make_map()
 
@@ -43,22 +38,10 @@ if __name__ == '__main__':
             for x in range(MAIN_WINDOW_SIZE_X):
                 main_window.addch(y, x, map_list[y][x])
 
-        # for y in range(MAIN_WINDOW_SIZE_Y - 1):
-        #     for x in range(MAIN_WINDOW_SIZE_X):
-        #         main_window.addstr(y, x, "#")
-
-        # for y in range(10):
-        #     for x in range(15):
-        #         main_window.addch(y, x, map_list[y - 1][x - 1])
-
-        # for y in range(10):
-        #     for x in range(15):
-        #         main_window.addch(y, x, str(y))
-
-        # main_window.addch(0, 0, map_list[0][0])
-
         main_window.refresh()
 
-        curses.napms(5000)
+        # curses.napms(5000)
+
+        x = main_window.getch()
 
         end(stdscr)
