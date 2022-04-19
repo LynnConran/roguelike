@@ -1,4 +1,5 @@
-import display, random
+import display
+import random
 
 MAX_X = display.MAIN_WINDOW_SIZE_X
 MAX_Y = display.MAIN_WINDOW_SIZE_Y
@@ -12,7 +13,9 @@ ROOM_DISTANCE = 3
 
 CORRIDOR_CHANGE_CHANCE = .2
 
-NUM_ROOMS = 8
+MIN_ROOMS = 7
+# NUM_ROOMS = 8
+MAX_ROOMS = 12
 
 rooms = []
 
@@ -22,6 +25,8 @@ def make_map():
 
     rows = []
     columns = []
+
+    num_rooms = random.randint(MIN_ROOMS, MAX_ROOMS)
 
     for y in range(MAX_Y):
         for x in range(MAX_X):
@@ -33,7 +38,7 @@ def make_map():
     # with open(file, "w") as my_file:
     #     my_file.writelines(str(rows))
 
-    for i in range(NUM_ROOMS):
+    for i in range(num_rooms):
         place_room(rows)
 
     make_corridors(rows)
