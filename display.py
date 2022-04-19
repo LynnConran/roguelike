@@ -30,18 +30,27 @@ if __name__ == '__main__':
         # curses.resizeterm(MAIN_WINDOW_SIZE_Y - 1, MAIN_WINDOW_SIZE_X)
 
     else:
-        main_window = curses.newwin(MAIN_WINDOW_SIZE_Y, MAIN_WINDOW_SIZE_X, 0, 0)
+        main_window = curses.newwin(MAIN_WINDOW_SIZE_Y, MAIN_WINDOW_SIZE_X, 1, 0)
+
+        x = 'null'
 
         map_list = map.make_map()
+        while x != 81:
+            stdscr.clear()
+            for y in range(MAIN_WINDOW_SIZE_Y - 1):
+                for x in range(MAIN_WINDOW_SIZE_X):
+                    main_window.addch(y, x, map_list[y][x])
 
-        for y in range(MAIN_WINDOW_SIZE_Y - 1):
-            for x in range(MAIN_WINDOW_SIZE_X):
-                main_window.addch(y, x, map_list[y][x])
+            main_window.refresh()
 
-        main_window.refresh()
+            # curses.napms(5000)
 
-        # curses.napms(5000)
+            x = main_window.getch()
 
-        x = main_window.getch()
+            stdscr.addstr(0, 0, "Key pressed: " + str(x))
+
+            stdscr.refresh()
+
+
 
         end(stdscr)
