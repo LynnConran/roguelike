@@ -1,8 +1,10 @@
-import display
+# import display
 import random
 
-MAX_X = display.MAIN_WINDOW_SIZE_X
-MAX_Y = display.MAIN_WINDOW_SIZE_Y
+# MAX_X = display.MAIN_WINDOW_SIZE_X
+# MAX_Y = display.MAIN_WINDOW_SIZE_Y
+MAX_X = 80
+MAX_Y = 26
 
 ROOM_MINIMUM_X = 5
 ROOM_MINIMUM_Y = 3

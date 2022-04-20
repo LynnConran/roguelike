@@ -4,7 +4,7 @@ import display
 
 class Slope:
 
-    def __init__(self, x, y):
+    def __init__(self, y, x):
         self.X = x,
         self.Y = y
 
@@ -14,17 +14,18 @@ class Slope:
     def greater_than_or_equal_to(self, x, y):
         return self.Y*x >= self.X*y
 
-    def lesser_than(self, x, y):
+    def less_than(self, x, y):
         return self.Y*x < self.X*y
 
 
-def compute(origin, range_limit):
-    # make origin visible
+def compute(origin, range_limit, is_player=False):
+    if is_player:
+        __set_visible(origin[0], origin[1])
     for i in range(8):
-        __compute(i, origin, range_limit, 1, Slope(1, 1), Slope(0, 1))
+        __compute(i, origin, range_limit, 1, Slope(1, 1), Slope(0, 1), is_player)
 
 
-def __compute(octant, origin, range_limit, x, top, bottom):
+def __compute(octant, origin, range_limit, x, top, bottom, is_player):
     pass
 
 
@@ -89,4 +90,6 @@ def set_visible(x, y, octant, origin):
 
 
 def __set_visible(x, y):
-    display.reveal(x, y)
+    if x < 0 or x >= display.MAIN_WINDOW_SIZE_X or y < 0 or y >= display.MAIN_WINDOW_SIZE_Y:
+        return
+    display.hidden[y][x] = True

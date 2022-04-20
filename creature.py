@@ -7,8 +7,7 @@ def move_check(x, y):
 
 class Creature:
 
-    def __init__(self, floor_plan, x_position, y_position, window, character):
-        self.floor_plan = floor_plan
+    def __init__(self, x_position, y_position, window, character):
         self.x_position = x_position
         self.y_position = y_position
         self.window = window
