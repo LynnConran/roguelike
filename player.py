@@ -8,11 +8,12 @@ class Player(creature.Creature):
     BASE_LINE_OF_SIGHT = 4
     SIGHT_LEEWAY = 0.4  # How fuzzy the distance is allowed to be. Pulled right out of a hat.
 
-    def __init__(self, x_position, y_position, window):
-        super().__init__(x_position, y_position, window, '@')
+    def __init__(self, x_position, y_position, floor_plan, window):
+        super().__init__(x_position, y_position, floor_plan, window, '@')
 
-    def look(self):
-        line_of_sight.compute((self.x_position, self.y_position), self.BASE_LINE_OF_SIGHT, True)
+    def look(self, floor_plan, hidden_map):
+        return line_of_sight.compute((self.x_position, self.y_position), self.BASE_LINE_OF_SIGHT, floor_plan,
+                                     hidden_map, True)
     #     x_max = len(self.floor_plan[0])
     #     y_max = len(self.floor_plan)
     #

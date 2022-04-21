@@ -6,15 +6,8 @@ import random
 MAIN_WINDOW_SIZE_X = 80
 MAIN_WINDOW_SIZE_Y = 26
 
-map_list = map.make_map()
-# global hidden
-
-hidden = []
-for y in range(MAIN_WINDOW_SIZE_Y):
-    temp_list = []
-    for x in range(MAIN_WINDOW_SIZE_X):
-        temp_list.append(False)
-    hidden.append(temp_list)
+# hidden = []
+# floor_plan = map.make_map()
 
 
 def end(scr):
@@ -30,27 +23,26 @@ def make_player_coords():
     x = random.randint(0, MAIN_WINDOW_SIZE_X - 1)
     y = random.randint(0, MAIN_WINDOW_SIZE_Y - 1)
 
-    while map_list[y][x] != '.':
+    while floor_plan[y][x] != '.':
         x = random.randint(0, MAIN_WINDOW_SIZE_X - 1)
         y = random.randint(0, MAIN_WINDOW_SIZE_Y - 1)
 
     return x, y
 
 
-def reveal(x, y):
-    # global hidden
-    if x < 0 or x >= MAIN_WINDOW_SIZE_X or y < 0 or y >= MAIN_WINDOW_SIZE_Y:
-        return
-    hidden[y][x] = True
-    # hidden[0][0] = True
-    # for y in range(MAIN_WINDOW_SIZE_Y):
-    #     for x in range(MAIN_WINDOW_SIZE_X):
-    #         hidden[y][x] = True
+# def reveal(x, y):
+#     # global hidden
+#     if x < 0 or x >= MAIN_WINDOW_SIZE_X or y < 0 or y >= MAIN_WINDOW_SIZE_Y:
+#         return
+#     hidden[y][x] = True
+#     # hidden[0][0] = True
+#     # for y in range(MAIN_WINDOW_SIZE_Y):
+#     #     for x in range(MAIN_WINDOW_SIZE_X):
+#     #         hidden[y][x] = True
 
 
-def check_walls_and_doors(x, y):
-    # global map_list
-    if x < 0 or x >= MAIN_WINDOW_SIZE_X or y < 0 or y >= MAIN_WINDOW_SIZE_Y or map_list[y][x] == '#':
+def check_walls_and_doors(x, y, floor_plan):
+    if x < 0 or x >= MAIN_WINDOW_SIZE_X or y < 0 or y >= MAIN_WINDOW_SIZE_Y or floor_plan[int(y)][int(x)] == '#':
         return False
     return True
 
@@ -102,14 +94,22 @@ if __name__ == '__main__':
     else:
         main_window = curses.newwin(MAIN_WINDOW_SIZE_Y, MAIN_WINDOW_SIZE_X, 1, 0)
 
+        floor_plan = map.make_map()
+
         x = 'null'
 
         # Two-dimensional list of booleans, false means hidden, true means seen and therefore visible.
-        # hidden = []
+        hidden = []
+
+        for y in range(MAIN_WINDOW_SIZE_Y):
+            temp_list = []
+            for x in range(MAIN_WINDOW_SIZE_X):
+                temp_list.append(False)
+            hidden.append(temp_list)
 
         player_x, player_y = make_player_coords()
 
-        player = player.Player(player_x, player_y, main_window)
+        player = player.Player(player_x, player_y, floor_plan, main_window)
 
         while x != 81:
             stdscr.clear()
@@ -135,7 +135,7 @@ if __name__ == '__main__':
                 player.move_north_east()
 
             # seen_tiles = player.look()
-            player.look()
+            hidden = player.look(floor_plan, hidden)
 
             # for i in seen_tiles:
             #     hidden[i[1]][i[0]] = True
@@ -143,7 +143,7 @@ if __name__ == '__main__':
             for y in range(MAIN_WINDOW_SIZE_Y - 1):
                 for x in range(MAIN_WINDOW_SIZE_X):
                     if hidden[y][x]:
-                        main_window.addch(y, x, map_list[y][x])
+                        main_window.addch(y, x, floor_plan[y][x])
 
             player.draw_self()
 
