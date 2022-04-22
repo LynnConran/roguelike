@@ -3,6 +3,12 @@ import line_of_sight
 import math
 
 
+# def unhide(seen_tiles, hidden_list):
+#     for i in seen_tiles:
+#         hidden_list[i[1]][i[0]] = True
+#     return seen_tiles
+
+
 class Player(creature.Creature):
 
     BASE_LINE_OF_SIGHT = 5
@@ -12,8 +18,10 @@ class Player(creature.Creature):
         super().__init__(x_position, y_position, floor_plan, window, '@')
 
     def look(self, floor_plan, hidden_map):
-        return line_of_sight.compute((self.x_position, self.y_position), self.BASE_LINE_OF_SIGHT, floor_plan,
-                                     hidden_map, True)
+        seen_tiles = line_of_sight.compute((self.x_position, self.y_position), self.BASE_LINE_OF_SIGHT, floor_plan, True)
+        return seen_tiles
+
+
     #     x_max = len(self.floor_plan[0])
     #     y_max = len(self.floor_plan)
     #

@@ -23,18 +23,21 @@ def get_distance(x, y):
     return math.dist((x, y), (0, 0))
 
 
-def compute(origin, range_limit, floor_plan, hidden_map, is_player=False):
+# Seen tiles: List of tuple coordinates, x, y
+def compute(origin, range_limit, floor_plan, is_player=False):
+    seen_tiles = []
     if is_player:
-        hidden_map = __set_visible(origin[0], origin[1], hidden_map)
+        seen_tiles += __set_visible(origin[0], origin[1], seen_tiles)
     for i in range(8):
-        hidden_map = __compute(i, origin, range_limit, 1, Slope(1, 1), Slope(0, 1), floor_plan, hidden_map, is_player)
-    return hidden_map
+        seen_tiles += __compute(i, origin, range_limit, 1, Slope(1, 1), Slope(0, 1), floor_plan,
+                                    seen_tiles, is_player)
+    return seen_tiles
 
 
 # I barely understand the algorithm at time of writing, it is beyond my capabilities to explain it at the moment.
 # In my understanding, it functions similarly to shadowcasting with diamond walls, but with beveled walls instead.
 # Please read the website written at the top
-def __compute(octant, origin, range_limit, x, top, bottom, floor_plan, hidden_map, is_player):
+def __compute(octant, origin, range_limit, x, top, bottom, floor_plan, seen_tiles, is_player):
     while x <= range_limit:
         if top.X == 1:
             top_y = x
@@ -72,7 +75,7 @@ def __compute(octant, origin, range_limit, x, top, bottom, floor_plan, hidden_ma
                                                                                                         x * 4 - 1)))
                 # is_visible deviates from the base code
                 if is_visible:
-                    hidden_map = set_visible(x, y, octant, origin, hidden_map)  # Change here to let monsters look
+                    seen_tiles = set_visible(x, y, octant, origin, seen_tiles)  # Change here to let monsters look
 
                 if x != range_limit:
                     if is_opaque:
@@ -86,11 +89,11 @@ def __compute(octant, origin, range_limit, x, top, bottom, floor_plan, hidden_ma
                                     bottom = Slope(ny, nx)
                                     break
                                 else:
-                                    hidden_map = __compute(octant, origin, range_limit, x + 1, top, Slope(ny, nx),
-                                                           floor_plan, hidden_map, is_player)
+                                    seen_tiles += __compute(octant, origin, range_limit, x + 1, top, Slope(ny, nx),
+                                                           floor_plan, seen_tiles, is_player)
                             else:
                                 if y == bottom_y:
-                                    return hidden_map
+                                    return seen_tiles
                         was_opaque = 1
                     else:
                         if was_opaque > 0:
@@ -99,14 +102,14 @@ def __compute(octant, origin, range_limit, x, top, bottom, floor_plan, hidden_ma
                             if blocks_light(x + 1, y + 1, octant, origin, floor_plan):
                                 nx += 1
                             if bottom.greater_than_or_equal_to(ny, nx):
-                                return hidden_map
+                                return seen_tiles
                             top = Slope(ny, nx)
                         was_opaque = 0
             y -= 1
         if was_opaque != 0:
             break
         x += 1
-    return hidden_map
+    return seen_tiles
 
 
 def blocks_light(x, y, octant, origin, floor_plan):
@@ -139,7 +142,7 @@ def blocks_light(x, y, octant, origin, floor_plan):
     return not display.check_walls_and_doors(int(nx), int(ny), floor_plan)
 
 
-def set_visible(x, y, octant, origin, hidden_map):
+def set_visible(x, y, octant, origin, seen_tiles):
     nx = origin[0]
     ny = origin[1]
     if octant == 0:
@@ -166,11 +169,12 @@ def set_visible(x, y, octant, origin, hidden_map):
     elif octant == 7:
         nx += x
         ny += y
-    return __set_visible(int(nx), int(ny), hidden_map)
+    return __set_visible(int(nx), int(ny), seen_tiles)
 
 
-def __set_visible(x, y, hidden_map):
+def __set_visible(x, y, seen_tiles):
     if x < 0 or x >= display.MAIN_WINDOW_SIZE_X or y < 0 or y >= display.MAIN_WINDOW_SIZE_Y:
-        return hidden_map
-    hidden_map[y][x] = True
-    return hidden_map
+        return seen_tiles
+    # seen_tiles[y][x] = True
+    seen_tiles.append((x, y))
+    return seen_tiles

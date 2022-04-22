@@ -2,6 +2,7 @@ import curses
 import map
 import player
 import random
+import goblin
 
 MAIN_WINDOW_SIZE_X = 80
 MAIN_WINDOW_SIZE_Y = 26
@@ -30,15 +31,15 @@ def make_player_coords():
     return x, y
 
 
-# def reveal(x, y):
-#     # global hidden
-#     if x < 0 or x >= MAIN_WINDOW_SIZE_X or y < 0 or y >= MAIN_WINDOW_SIZE_Y:
-#         return
-#     hidden[y][x] = True
-#     # hidden[0][0] = True
-#     # for y in range(MAIN_WINDOW_SIZE_Y):
-#     #     for x in range(MAIN_WINDOW_SIZE_X):
-#     #         hidden[y][x] = True
+def make_monster_coords():
+    x = random.randint(0, MAIN_WINDOW_SIZE_X - 1)
+    y = random.randint(0, MAIN_WINDOW_SIZE_Y - 1)
+
+    while floor_plan[y][x] != '.':
+        x = random.randint(0, MAIN_WINDOW_SIZE_X - 1)
+        y = random.randint(0, MAIN_WINDOW_SIZE_Y - 1)
+
+    return x, y
 
 
 def check_walls_and_doors(x, y, floor_plan):
@@ -51,6 +52,15 @@ def check_for_creatures(x_pos, y_pos):
     return True
 
 
+def unhide(hidden_list, seen_tiles, floor_plan, level_string):
+    for i in seen_tiles:
+        if not hidden_list[i[1]][i[0]]:
+            index = i[1] * MAIN_WINDOW_SIZE_X + i[0]
+            level_string = level_string[:index] + floor_plan[i[1]][i[0]] + level_string[index+1:]
+            hidden_list[i[1]][i[0]] = True
+    return level_string, hidden_list
+
+
 # def make_hidden():
 #     global hidden
 #     hidden = []
@@ -61,9 +71,14 @@ def check_for_creatures(x_pos, y_pos):
 #         hidden.append(temp_list)
 
 
-# def make_map():
-#     global map_list
-#     map_list = map.make_map()
+def make_string():
+    my_str = ""
+    for y in range(MAIN_WINDOW_SIZE_Y):
+        temp_str = ''
+        for x in range(MAIN_WINDOW_SIZE_X):
+            temp_str += " "
+        my_str += temp_str
+    return my_str
 
 
 if __name__ == '__main__':
@@ -73,7 +88,10 @@ if __name__ == '__main__':
     curses.noecho()
     curses.cbreak()
     stdscr.keypad(True)
+    curses.start_color()
     curses.curs_set(0)
+
+    curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_WHITE)
 
     # make_hidden()
     # for y in range(len(map_list)):
@@ -84,7 +102,14 @@ if __name__ == '__main__':
 
     num_rows, num_columns = stdscr.getmaxyx()
 
-    if num_rows < MAIN_WINDOW_SIZE_Y or num_columns < MAIN_WINDOW_SIZE_X:
+    if not curses.has_colors():
+        stdscr.addstr(0, 0, "no colors, aborting")
+        stdscr.refresh()
+        curses.napms(2000)
+        end(stdscr)
+
+
+    elif num_rows < MAIN_WINDOW_SIZE_Y or num_columns < MAIN_WINDOW_SIZE_X:
         stdscr.addstr(0, 0, "Screen too small, aborting")
         stdscr.refresh()
         curses.napms(2000)
@@ -92,9 +117,14 @@ if __name__ == '__main__':
         # curses.resizeterm(MAIN_WINDOW_SIZE_Y - 1, MAIN_WINDOW_SIZE_X)
 
     else:
-        main_window = curses.newwin(MAIN_WINDOW_SIZE_Y, MAIN_WINDOW_SIZE_X, 1, 0)
+        main_window = curses.newwin(MAIN_WINDOW_SIZE_Y + 1, MAIN_WINDOW_SIZE_X, 1, 0)
 
         floor_plan = map.make_map()
+
+        creature_list = []
+
+        level_string = ''
+        level_string += make_string()
 
         x = 'null'
 
@@ -109,7 +139,13 @@ if __name__ == '__main__':
 
         player_x, player_y = make_player_coords()
 
+        goblin_x, goblin_y = make_monster_coords()
+
         player = player.Player(player_x, player_y, floor_plan, main_window)
+
+        goblin = goblin.Goblin(goblin_x, goblin_y, floor_plan, main_window)
+
+        creature_list.append(goblin)
 
         while x != 81:
             stdscr.clear()
@@ -135,17 +171,38 @@ if __name__ == '__main__':
                 player.move_north_east()
 
             # seen_tiles = player.look()
-            hidden = player.look(floor_plan, hidden)
+            visible_tiles = player.look(floor_plan, hidden)
+
+            level_string, hidden = unhide(hidden, visible_tiles, floor_plan, level_string)
 
             # for i in seen_tiles:
             #     hidden[i[1]][i[0]] = True
+            #
+            # for y in range(MAIN_WINDOW_SIZE_Y - 1):
+            #     for x in range(MAIN_WINDOW_SIZE_X):
+            #         if hidden[y][x]:
+            #             # if (x, y) in visible_tiles:
+            #             #     main_window.addch(y, x, floor_plan[y][x], curses.color_pair(1))
+            #             # else:
+            #             main_window.addch(y, x, floor_plan[y][x])\
 
-            for y in range(MAIN_WINDOW_SIZE_Y - 1):
-                for x in range(MAIN_WINDOW_SIZE_X):
-                    if hidden[y][x]:
-                        main_window.addch(y, x, floor_plan[y][x])
+            main_window.addstr(0, 0, level_string)
+
+            # for y in range(player.y_position - player.BASE_LINE_OF_SIGHT, player.y_position + player.BASE_LINE_OF_SIGHT):
+            #     for x in range (player.x_position - player.BASE_LINE_OF_SIGHT, player.x_position + player.BASE_LINE_OF_SIGHT):
+            #         if not (x < 0 or x >= MAIN_WINDOW_SIZE_X or y < 0 or y >= MAIN_WINDOW_SIZE_Y):
+            #             if (x, y) in visible_tiles:
+            #                 main_window.addch(y, x, floor_plan[y][x], curses.color_pair(1))
+
+            for i in visible_tiles:
+                main_window.addch(i[1], i[0], floor_plan[i[1]][i[0]], curses.color_pair(1))
 
             player.draw_self()
+
+            for i in creature_list:
+                if (i.x_position, i.y_position) in visible_tiles:
+                    i.draw_self()
+            # goblin.draw_self()
 
             main_window.refresh()
 
