@@ -24,25 +24,23 @@ def get_distance(x, y):
 
 
 # Seen tiles: List of tuple coordinates, x, y
-def compute(origin, range_limit, floor_plan, is_player=False):
+def compute(origin, range_limit, floor_plan):
     seen_tiles = []
-    if is_player:
-        seen_tiles += __set_visible(origin[0], origin[1], seen_tiles)
+    seen_tiles += __set_visible(origin[0], origin[1], seen_tiles)
     for i in range(8):
-        seen_tiles += __compute(i, origin, range_limit, 1, Slope(1, 1), Slope(0, 1), floor_plan,
-                                    seen_tiles, is_player)
+        seen_tiles += __compute(i, origin, range_limit, 1, Slope(1, 1), Slope(0, 1), floor_plan, seen_tiles)
     return seen_tiles
 
 
 # I barely understand the algorithm at time of writing, it is beyond my capabilities to explain it at the moment.
 # In my understanding, it functions similarly to shadowcasting with diamond walls, but with beveled walls instead.
 # Please read the website written at the top
-def __compute(octant, origin, range_limit, x, top, bottom, floor_plan, seen_tiles, is_player):
+def __compute(octant, origin, range_limit, x, top, bottom, floor_plan, seen_tiles):
     while x <= range_limit:
         if top.X == 1:
             top_y = x
         else:
-            top_y = (((x * 2 + 1) * top.Y) + top.X) / (top.X * 2)
+            top_y = (((x * 2 - 1) * top.Y) + top.X) / (top.X * 2)
             if blocks_light(x, top_y, octant, origin, floor_plan):
                 if top.greater_than_or_equal_to(top_y * 2 + 1, x * 2) \
                         and not blocks_light(x, top_y + 1, octant, origin, floor_plan):
@@ -70,10 +68,8 @@ def __compute(octant, origin, range_limit, x, top, bottom, floor_plan, seen_tile
                 is_opaque = blocks_light(x, y, octant, origin, floor_plan)
                 # is_visible = is_opaque or ((y != top_y or top.greater_than(y*4 - 1, x * 4 + 1)) and (y != bottom_y
                 #                                                                or bottom.less_than(y*4 + 1, x*4 - 1)))
-                is_visible = (is_opaque and was_opaque >= 0) or ((y != top_y or top.greater_than(y * 4 - 1, x * 4 + 1))
-                                                                 and (y != bottom_y or bottom.less_than(y * 4 + 1,
-                                                                                                        x * 4 - 1)))
-                # is_visible deviates from the base code
+                is_visible = is_opaque or ((y != top_y or top.greater_than(y * 4 - 1, x * 4 + 1))
+                                           and (y != bottom_y or bottom.less_than(y * 4 + 1, x * 4 - 1)))
                 if is_visible:
                     seen_tiles = set_visible(x, y, octant, origin, seen_tiles)  # Change here to let monsters look
 
@@ -90,7 +86,7 @@ def __compute(octant, origin, range_limit, x, top, bottom, floor_plan, seen_tile
                                     break
                                 else:
                                     seen_tiles += __compute(octant, origin, range_limit, x + 1, top, Slope(ny, nx),
-                                                           floor_plan, seen_tiles, is_player)
+                                                           floor_plan, seen_tiles)
                             else:
                                 if y == bottom_y:
                                     return seen_tiles

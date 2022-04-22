@@ -1,5 +1,4 @@
 import creature
-import line_of_sight
 import math
 
 
@@ -16,10 +15,6 @@ class Player(creature.Creature):
 
     def __init__(self, x_position, y_position, floor_plan, window):
         super().__init__(x_position, y_position, floor_plan, window, '@')
-
-    def look(self, floor_plan, hidden_map):
-        seen_tiles = line_of_sight.compute((self.x_position, self.y_position), self.BASE_LINE_OF_SIGHT, floor_plan, True)
-        return seen_tiles
 
 
     #     x_max = len(self.floor_plan[0])

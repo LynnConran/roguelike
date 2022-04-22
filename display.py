@@ -61,14 +61,22 @@ def unhide(hidden_list, seen_tiles, floor_plan, level_string):
     return level_string, hidden_list
 
 
-# def make_hidden():
-#     global hidden
-#     hidden = []
-#     for y in range(MAIN_WINDOW_SIZE_Y):
-#         temp_list = []
-#         for x in range(MAIN_WINDOW_SIZE_X):
-#             temp_list.append(False)
-#         hidden.append(temp_list)
+def reveal_all(hidden_list, floor_plan, level_string):
+    big_ol_list = []
+    for y in range(len(hidden_list)):
+        for x in range(len(hidden_list[0])):
+            big_ol_list.append((x, y))
+    return unhide(hidden_list, big_ol_list, floor_plan, level_string)
+
+
+def draw_entity(x, y, char, pair, screen):
+    screen.addch(y, x, char, curses.color_pair(pair))
+
+
+def make_pairs():
+    curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_WHITE)
+    curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)
+
 
 
 def make_string():
@@ -90,8 +98,8 @@ if __name__ == '__main__':
     stdscr.keypad(True)
     curses.start_color()
     curses.curs_set(0)
+    make_pairs()
 
-    curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_WHITE)
 
     # make_hidden()
     # for y in range(len(map_list)):
@@ -169,6 +177,8 @@ if __name__ == '__main__':
                 player.move_north()
             elif x == 57 or x == 117:  # = 9 or u
                 player.move_north_east()
+            elif x == 92:
+                level_string, hidden, = reveal_all(hidden, floor_plan, level_string)
 
             # seen_tiles = player.look()
             visible_tiles = player.look(floor_plan, hidden)
@@ -194,8 +204,8 @@ if __name__ == '__main__':
             #             if (x, y) in visible_tiles:
             #                 main_window.addch(y, x, floor_plan[y][x], curses.color_pair(1))
 
-            for i in visible_tiles:
-                main_window.addch(i[1], i[0], floor_plan[i[1]][i[0]], curses.color_pair(1))
+            # for i in visible_tiles:
+            #     main_window.addch(i[1], i[0], floor_plan[i[1]][i[0]], curses.color_pair(1))
 
             player.draw_self()
 
