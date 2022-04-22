@@ -42,7 +42,7 @@ def make_player_coords():
 
 
 def check_walls_and_doors(x, y, floor_plan):
-    if x < 0 or x >= MAIN_WINDOW_SIZE_X or y < 0 or y >= MAIN_WINDOW_SIZE_Y or floor_plan[int(y)][int(x)] == '#':
+    if x < 0 or x >= MAIN_WINDOW_SIZE_X or y < 0 or y >= MAIN_WINDOW_SIZE_Y or floor_plan[y][x] == '#':
         return False
     return True
 

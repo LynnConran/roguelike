@@ -5,7 +5,7 @@ import math
 
 class Player(creature.Creature):
 
-    BASE_LINE_OF_SIGHT = 4
+    BASE_LINE_OF_SIGHT = 5
     SIGHT_LEEWAY = 0.4  # How fuzzy the distance is allowed to be. Pulled right out of a hat.
 
     def __init__(self, x_position, y_position, floor_plan, window):
