@@ -1,5 +1,6 @@
 # Credit to Adam Milazzo, for http://www.adammil.net/blog/v125_Roguelike_Vision_Algorithms.html
-import display
+# import display
+import global_variables
 import math
 
 
@@ -21,6 +22,13 @@ class Slope:
 
 def get_distance(x, y):
     return math.dist((x, y), (0, 0))
+
+
+def check_walls_and_doors(x, y, floor_plan):
+    if x < 0 or x >= global_variables.MAIN_WINDOW_SIZE_X or y < 0 or y >= global_variables.MAIN_WINDOW_SIZE_Y \
+             or floor_plan[y][x] == '#':
+        return False
+    return True
 
 
 # Seen tiles: List of tuple coordinates, x, y
@@ -135,7 +143,7 @@ def blocks_light(x, y, octant, origin, floor_plan):
     elif octant == 7:
         nx += x
         ny += y
-    return not display.check_walls_and_doors(int(nx), int(ny), floor_plan)
+    return not check_walls_and_doors(int(nx), int(ny), floor_plan)
 
 
 def set_visible(x, y, octant, origin, seen_tiles):
@@ -169,8 +177,7 @@ def set_visible(x, y, octant, origin, seen_tiles):
 
 
 def __set_visible(x, y, seen_tiles):
-    if x < 0 or x >= display.MAIN_WINDOW_SIZE_X or y < 0 or y >= display.MAIN_WINDOW_SIZE_Y:
+    if x < 0 or x >= global_variables.MAIN_WINDOW_SIZE_X or y < 0 or y >= global_variables.MAIN_WINDOW_SIZE_Y:
         return seen_tiles
-    # seen_tiles[y][x] = True
     seen_tiles.append((x, y))
     return seen_tiles

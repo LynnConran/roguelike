@@ -7,5 +7,5 @@ class Player(creature.Creature):
     IS_PLAYER = True
     BASE_HEALTH = 10  # Replace later once stats exist
 
-    def __init__(self, x_position, y_position, floor_plan, creature_list, window, color_pair=0):
-        super().__init__(x_position, y_position, floor_plan, creature_list, window, '@', color_pair)
+    def __init__(self, x_position, y_position, floor_plan, creature_list, window, screen, color_pair=0):
+        super().__init__(x_position, y_position, floor_plan, creature_list, window, screen, '@', color_pair)

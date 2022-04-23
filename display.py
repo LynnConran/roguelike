@@ -46,23 +46,15 @@ def make_monster_coords():
     return x, y
 
 
-def check_walls_and_doors(x, y, floor_plan):
-    if x < 0 or x >= MAIN_WINDOW_SIZE_X or y < 0 or y >= MAIN_WINDOW_SIZE_Y or floor_plan[y][x] == '#':
-        return False
-    return True
-
-
-def check_for_creatures(x_pos, y_pos, creature_list):
-    destination = (x_pos, y_pos)
-    for critter in creature_list:
-        if destination == critter.get_x_and_y():
-            return False
-    return True
-
-
-def hit_wall():  # Designed to be called if hte player walked into a wall
-    stdscr.addstr(0, 0, "Bonk!")
-    stdscr.refresh()
+def change_level(floor_plan, hidden_list, level_string):
+    for y in range(MAIN_WINDOW_SIZE_Y):
+        for x in range(MAIN_WINDOW_SIZE_X):
+            index = y * MAIN_WINDOW_SIZE_X + x
+            if not hidden_list[y][x]:
+                level_string = level_string[:index] + ' ' + level_string[index + 1:]
+            else:
+                level_string = level_string[:index] + floor_plan[y][x] + level_string[index + 1:]
+    return level_string
 
 
 def unhide(hidden_list, seen_tiles, floor_plan, level_string):
@@ -82,27 +74,11 @@ def reveal_all(hidden_list, floor_plan, level_string):
     return unhide(hidden_list, big_ol_list, floor_plan, level_string)
 
 
-def draw_entity(x, y, char, pair, screen):
-    screen.addch(y, x, char, curses.color_pair(pair))
-
-
 def make_pairs():
     curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_WHITE)
     curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)
     curses.init_color(curses.COLOR_CYAN, 0, 0, 1000)
     curses.init_pair(8, curses.COLOR_CYAN, curses.COLOR_BLACK)
-
-
-def print_attack_message(critter, is_player, was_kill):
-    if is_player:
-        if was_kill:
-            stdscr.addstr(0, 0, "You kill the " + critter.CLASS_NAME + "!")
-        else:
-            stdscr.addstr(0, 0, "You hit the " + critter.CLASS_NAME + ", it has " + str(critter.current_health)
-                          + " health remaining.")
-    else:
-        pass
-    stdscr.refresh()
 
 
 def game_over():
@@ -117,6 +93,28 @@ def make_string():
             temp_str += " "
         my_str += temp_str
     return my_str
+
+
+def check_on_upstairs():  # I expect to put more logic here eventually
+    return floor_plan[player.y_position][player.x_position] == '<'
+
+
+def check_on_downstairs():
+    return floor_plan[player.y_position][player.x_position] == '>'
+
+
+def move_upstairs(level):
+    if level == 1:
+        stdscr.addstr(0, 0, "Are you sure?")
+        stdscr.refresh()
+    else:
+        level -= 1
+    return level
+
+
+def move_downstairs(level):
+    level += 1
+    return level
 
 
 if __name__ == '__main__':
@@ -151,14 +149,16 @@ if __name__ == '__main__':
 
         with open('dungeon.txt', 'w') as file:
             pass
+
         dungeon.make_maps(3, 'dungeon.txt')
 
         floor_plan, hidden = dungeon.read_map('dungeon.txt', 0)
 
+        dungeon_level = 1
+
         creature_list = []
 
-        level_string = ''
-        level_string += make_string()
+        level_string = make_string()
 
         x = 'null'
 
@@ -166,9 +166,9 @@ if __name__ == '__main__':
 
         goblin_x, goblin_y = make_monster_coords()
 
-        player = player.Player(player_x, player_y, floor_plan, creature_list, main_window, 8)
+        player = player.Player(player_x, player_y, floor_plan, creature_list, main_window, stdscr, 8)
 
-        goblin = goblin.Goblin(goblin_x, goblin_y, floor_plan, creature_list, main_window)
+        goblin = goblin.Goblin(goblin_x, goblin_y, floor_plan, creature_list, main_window, stdscr)
 
         creature_list.append(goblin)
 
@@ -197,9 +197,23 @@ if __name__ == '__main__':
             elif x == 92:
                 level_string, hidden, = reveal_all(hidden, floor_plan, level_string)
             elif x == 60:  # <
-                pass
+                if check_on_upstairs():
+                    dungeon.save_map(floor_plan, hidden, "dungeon.txt", dungeon_level - 1)
+                    dungeon_level = move_upstairs(dungeon_level)
+                    floor_plan, hidden = dungeon.read_map("dungeon.txt", dungeon_level - 1)
+                    player.change_floor_plan(floor_plan)
+                    for i in creature_list:
+                        i.change_floor_plan(floor_plan)
+                    level_string = change_level(floor_plan, hidden, level_string)
             elif x == 62:  # >
-                pass
+                if check_on_downstairs():
+                    dungeon.save_map(floor_plan, hidden, "dungeon.txt", dungeon_level - 1)
+                    dungeon_level = move_downstairs(dungeon_level)
+                    floor_plan, hidden = dungeon.read_map("dungeon.txt", dungeon_level - 1)
+                    player.change_floor_plan(floor_plan)
+                    for i in creature_list:
+                        i.change_floor_plan(floor_plan)
+                    level_string = change_level(floor_plan, hidden, level_string)
 
             # seen_tiles = player.look()
             visible_tiles = player.look(floor_plan)
@@ -223,7 +237,7 @@ if __name__ == '__main__':
 
             stdscr.addstr(0, 0, "Key pressed: " + str(x))
 
-            stdscr.addstr(MINIMUM_WINDOW_SIZE_Y - 2, 0, "Dungeon Level: " + "1")
+            stdscr.addstr(MINIMUM_WINDOW_SIZE_Y - 2, 0, "Dungeon Level: " + str(dungeon_level))
 
             stdscr.refresh()
 
