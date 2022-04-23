@@ -1,11 +1,14 @@
 import curses
-import map
+import global_variables
 import player
 import random
 import goblin
+import dungeon
 
-MAIN_WINDOW_SIZE_X = 80
-MAIN_WINDOW_SIZE_Y = 26
+MINIMUM_WINDOW_SIZE_X = global_variables.MINIMUM_WINDOW_SIZE_X
+MINIMUM_WINDOW_SIZE_Y = global_variables.MINIMUM_WINDOW_SIZE_Y
+MAIN_WINDOW_SIZE_X = global_variables.MAIN_WINDOW_SIZE_X
+MAIN_WINDOW_SIZE_Y = global_variables.MAIN_WINDOW_SIZE_Y
 
 stdscr = curses.initscr()
 # hidden = []
@@ -90,12 +93,20 @@ def make_pairs():
     curses.init_pair(8, curses.COLOR_CYAN, curses.COLOR_BLACK)
 
 
-def print_attack_message(critter, is_player):
+def print_attack_message(critter, is_player, was_kill):
     if is_player:
-        stdscr.addstr(0, 0, "You hit the " + critter.CLASS_NAME + " at position: " + str(critter.get_x_and_y()))
+        if was_kill:
+            stdscr.addstr(0, 0, "You kill the " + critter.CLASS_NAME + "!")
+        else:
+            stdscr.addstr(0, 0, "You hit the " + critter.CLASS_NAME + ", it has " + str(critter.current_health)
+                          + " health remaining.")
     else:
         pass
     stdscr.refresh()
+
+
+def game_over():
+    stdscr.addstr(0, 0, "Lmao, you literally died")
 
 
 def make_string():
@@ -126,7 +137,7 @@ if __name__ == '__main__':
         curses.napms(2000)
         end(stdscr)
 
-    elif num_rows < MAIN_WINDOW_SIZE_Y or num_columns < MAIN_WINDOW_SIZE_X:
+    elif num_rows < MINIMUM_WINDOW_SIZE_Y or num_columns < MINIMUM_WINDOW_SIZE_X:
         stdscr.addstr(0, 0, "Screen too small, aborting")
         stdscr.refresh()
         curses.napms(2000)
@@ -136,7 +147,13 @@ if __name__ == '__main__':
     else:
         main_window = curses.newwin(MAIN_WINDOW_SIZE_Y + 1, MAIN_WINDOW_SIZE_X, 1, 0)
 
-        floor_plan = map.make_map()
+        # floor_plan, hidden = map.make_map()
+
+        with open('dungeon.txt', 'w') as file:
+            pass
+        dungeon.make_maps(3, 'dungeon.txt')
+
+        floor_plan, hidden = dungeon.read_map('dungeon.txt', 0)
 
         creature_list = []
 
@@ -144,15 +161,6 @@ if __name__ == '__main__':
         level_string += make_string()
 
         x = 'null'
-
-        # Two-dimensional list of booleans, false means hidden, true means seen and therefore visible.
-        hidden = []
-
-        for y in range(MAIN_WINDOW_SIZE_Y):
-            temp_list = []
-            for x in range(MAIN_WINDOW_SIZE_X):
-                temp_list.append(False)
-            hidden.append(temp_list)
 
         player_x, player_y = make_player_coords()
 
@@ -188,33 +196,17 @@ if __name__ == '__main__':
                 player.move_north_east()
             elif x == 92:
                 level_string, hidden, = reveal_all(hidden, floor_plan, level_string)
+            elif x == 60:  # <
+                pass
+            elif x == 62:  # >
+                pass
 
             # seen_tiles = player.look()
-            visible_tiles = player.look(floor_plan, hidden)
+            visible_tiles = player.look(floor_plan)
 
             level_string, hidden = unhide(hidden, visible_tiles, floor_plan, level_string)
 
-            # for i in seen_tiles:
-            #     hidden[i[1]][i[0]] = True
-            #
-            # for y in range(MAIN_WINDOW_SIZE_Y - 1):
-            #     for x in range(MAIN_WINDOW_SIZE_X):
-            #         if hidden[y][x]:
-            #             # if (x, y) in visible_tiles:
-            #             #     main_window.addch(y, x, floor_plan[y][x], curses.color_pair(1))
-            #             # else:
-            #             main_window.addch(y, x, floor_plan[y][x])\
-
             main_window.addstr(0, 0, level_string)
-
-        # for y in range(player.y_position - player.BASE_LINE_OF_SIGHT, player.y_position + player.BASE_LINE_OF_SIGHT):
-        # for x in range (player.x_position - player.BASE_LINE_OF_SIGHT, player.x_position + player.BASE_LINE_OF_SIGHT):
-            #         if not (x < 0 or x >= MAIN_WINDOW_SIZE_X or y < 0 or y >= MAIN_WINDOW_SIZE_Y):
-            #             if (x, y) in visible_tiles:
-            #                 main_window.addch(y, x, floor_plan[y][x], curses.color_pair(1))
-
-            # for i in visible_tiles:
-            #     main_window.addch(i[1], i[0], floor_plan[i[1]][i[0]], curses.color_pair(1))
 
             player.draw_self()
 
@@ -230,6 +222,8 @@ if __name__ == '__main__':
             x = main_window.getch()
 
             stdscr.addstr(0, 0, "Key pressed: " + str(x))
+
+            stdscr.addstr(MINIMUM_WINDOW_SIZE_Y - 2, 0, "Dungeon Level: " + "1")
 
             stdscr.refresh()
 

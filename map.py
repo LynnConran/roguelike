@@ -1,8 +1,8 @@
-import display
+import global_variables
 import random
 
-MAX_X = display.MAIN_WINDOW_SIZE_X
-MAX_Y = display.MAIN_WINDOW_SIZE_Y
+MAX_X = global_variables.MAIN_WINDOW_SIZE_X
+MAX_Y = global_variables.MAIN_WINDOW_SIZE_Y
 # MAX_X = 80
 # MAX_Y = 26
 
@@ -23,18 +23,24 @@ rooms = []
 
 
 def make_map():
-    # Currently a massive stub
-
     rows = []
-    columns = []
 
     num_rooms = random.randint(MIN_ROOMS, MAX_ROOMS)
 
+    # Two-dimensional list of booleans, false means hidden, true means seen and therefore visible.
+    hidden = []
+
     for y in range(MAX_Y):
+        temp_list = []
+        for x in range(MAX_X):
+            temp_list.append(False)
+        hidden.append(temp_list)
+
+    for y in range(MAX_Y):
+        columns = []
         for x in range(MAX_X):
             columns.append('#')
         rows.append(columns)
-        columns = []
 
     # file = "log.txt"
     # with open(file, "w") as my_file:
@@ -45,7 +51,9 @@ def make_map():
 
     make_corridors(rows)
 
-    return rows
+    place_stairs(rows)
+
+    return rows, hidden
 
 
 def place_room(rows, recursive_count=0):
@@ -65,7 +73,20 @@ def place_room(rows, recursive_count=0):
         rooms.append((room_x_position, room_y_position, room_x_length, room_y_length))
     else:
         place_room(rows, recursive_count + 1)
-        return
+        # return
+
+
+def place_stairs(rows):
+    up_room = random.randint(0, len(rooms) - 1)
+    down_room = random.randint(0, len(rooms) - 1)
+    while down_room == up_room:
+        down_room = random.randint(0, len(rooms) - 1)
+    up_stairs_x = random.randint(rooms[up_room][0] + 1, rooms[up_room][0] + rooms[up_room][2] - 2)
+    up_stairs_y = random.randint(rooms[up_room][1] + 1, rooms[up_room][1] + rooms[up_room][3] - 2)
+    down_stairs_x = random.randint(rooms[down_room][0] + 1, rooms[down_room][0] + rooms[down_room][2] - 2)
+    down_stairs_y = random.randint(rooms[down_room][1] + 1, rooms[down_room][1] + rooms[down_room][3] - 2)
+    rows[up_stairs_y][up_stairs_x] = '<'
+    rows[down_stairs_y][down_stairs_x] = '>'
 
 
 def check_room(x_len, y_len, x_pos, y_pos, rows):

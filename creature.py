@@ -7,6 +7,7 @@ class Creature:
     BASE_LINE_OF_SIGHT = 4
     IS_PLAYER = False  # Overwritten by player, if I understand inheritance properly
     CLASS_NAME = "?"
+    BASE_HEALTH = 1
 
     def __init__(self, x_position, y_position, floor_plan, creature_list, window, character, color_pair=0):
         self.x_position = x_position
@@ -16,6 +17,7 @@ class Creature:
         self.window = window
         self.character = character
         self.color_pair = color_pair
+        self.current_health = self.BASE_HEALTH
 
     def move(self, x_pos, y_pos):
         self.x_position = x_pos
@@ -85,15 +87,32 @@ class Creature:
             return False
         return True
 
-    def look(self, floor_plan, hidden_map):
+    def look(self, floor_plan):
         seen_tiles = line_of_sight.compute((self.x_position, self.y_position), self.BASE_LINE_OF_SIGHT, floor_plan)
         return seen_tiles
 
     def get_x_and_y(self):
         return self.x_position, self.y_position
 
+    def calculate_damage(self, critter):
+        return 1
+
+    def equals(self, critter):
+        return self.get_x_and_y() == critter.get_x_and_y()
+
+    def die(self):
+        if not self.IS_PLAYER:
+            self.creature_list.remove(self)
+        else:
+            pass
+
     def attack(self, critter):
-        display.print_attack_message(critter, self.IS_PLAYER)
+        damage = self.calculate_damage(critter)
+        critter.current_health -= damage
+        is_critter_killed = critter.current_health < 1
+        if critter.current_health < 1:
+            critter.die()
+        display.print_attack_message(critter, self.IS_PLAYER, is_critter_killed)
 
     def interact(self, position):
         if self.IS_PLAYER:
