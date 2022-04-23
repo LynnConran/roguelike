@@ -12,9 +12,10 @@ class Player(creature.Creature):
 
     BASE_LINE_OF_SIGHT = 5
     SIGHT_LEEWAY = 0.4  # How fuzzy the distance is allowed to be. Pulled right out of a hat.
+    IS_PLAYER = True
 
-    def __init__(self, x_position, y_position, floor_plan, window):
-        super().__init__(x_position, y_position, floor_plan, window, '@')
+    def __init__(self, x_position, y_position, floor_plan, creature_list, window, color_pair=0):
+        super().__init__(x_position, y_position, floor_plan, creature_list, window, '@', color_pair)
 
 
     #     x_max = len(self.floor_plan[0])

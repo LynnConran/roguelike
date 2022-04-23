@@ -7,6 +7,7 @@ import goblin
 MAIN_WINDOW_SIZE_X = 80
 MAIN_WINDOW_SIZE_Y = 26
 
+stdscr = curses.initscr()
 # hidden = []
 # floor_plan = map.make_map()
 
@@ -48,8 +49,17 @@ def check_walls_and_doors(x, y, floor_plan):
     return True
 
 
-def check_for_creatures(x_pos, y_pos):
+def check_for_creatures(x_pos, y_pos, creature_list):
+    destination = (x_pos, y_pos)
+    for critter in creature_list:
+        if destination == critter.get_x_and_y():
+            return False
     return True
+
+
+def hit_wall():  # Designed to be called if hte player walked into a wall
+    stdscr.addstr(0, 0, "Bonk!")
+    stdscr.refresh()
 
 
 def unhide(hidden_list, seen_tiles, floor_plan, level_string):
@@ -76,7 +86,16 @@ def draw_entity(x, y, char, pair, screen):
 def make_pairs():
     curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_WHITE)
     curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)
+    curses.init_color(curses.COLOR_CYAN, 0, 0, 1000)
+    curses.init_pair(8, curses.COLOR_CYAN, curses.COLOR_BLACK)
 
+
+def print_attack_message(critter, is_player):
+    if is_player:
+        stdscr.addstr(0, 0, "You hit the " + critter.CLASS_NAME + " at position: " + str(critter.get_x_and_y()))
+    else:
+        pass
+    stdscr.refresh()
 
 
 def make_string():
@@ -92,21 +111,12 @@ def make_string():
 if __name__ == '__main__':
     # global hidden
 
-    stdscr = curses.initscr()
     curses.noecho()
     curses.cbreak()
     stdscr.keypad(True)
     curses.start_color()
     curses.curs_set(0)
     make_pairs()
-
-
-    # make_hidden()
-    # for y in range(len(map_list)):
-    #     temp_list = []
-    #     for x in range(len(map_list[0])):
-    #         temp_list.append(False)
-    #     hidden.append(temp_list)
 
     num_rows, num_columns = stdscr.getmaxyx()
 
@@ -115,7 +125,6 @@ if __name__ == '__main__':
         stdscr.refresh()
         curses.napms(2000)
         end(stdscr)
-
 
     elif num_rows < MAIN_WINDOW_SIZE_Y or num_columns < MAIN_WINDOW_SIZE_X:
         stdscr.addstr(0, 0, "Screen too small, aborting")
@@ -149,9 +158,9 @@ if __name__ == '__main__':
 
         goblin_x, goblin_y = make_monster_coords()
 
-        player = player.Player(player_x, player_y, floor_plan, main_window)
+        player = player.Player(player_x, player_y, floor_plan, creature_list, main_window, 8)
 
-        goblin = goblin.Goblin(goblin_x, goblin_y, floor_plan, main_window)
+        goblin = goblin.Goblin(goblin_x, goblin_y, floor_plan, creature_list, main_window)
 
         creature_list.append(goblin)
 
@@ -198,8 +207,8 @@ if __name__ == '__main__':
 
             main_window.addstr(0, 0, level_string)
 
-            # for y in range(player.y_position - player.BASE_LINE_OF_SIGHT, player.y_position + player.BASE_LINE_OF_SIGHT):
-            #     for x in range (player.x_position - player.BASE_LINE_OF_SIGHT, player.x_position + player.BASE_LINE_OF_SIGHT):
+        # for y in range(player.y_position - player.BASE_LINE_OF_SIGHT, player.y_position + player.BASE_LINE_OF_SIGHT):
+        # for x in range (player.x_position - player.BASE_LINE_OF_SIGHT, player.x_position + player.BASE_LINE_OF_SIGHT):
             #         if not (x < 0 or x >= MAIN_WINDOW_SIZE_X or y < 0 or y >= MAIN_WINDOW_SIZE_Y):
             #             if (x, y) in visible_tiles:
             #                 main_window.addch(y, x, floor_plan[y][x], curses.color_pair(1))
