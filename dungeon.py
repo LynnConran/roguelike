@@ -7,12 +7,12 @@ MAX_Y = global_variables.MAIN_WINDOW_SIZE_Y
 # MAX_Y = 26
 
 
-def make_maps(num_maps, file_name):
+def make_maps(num_maps, file_name, offset=0):
     map_list = []
     for i in range(num_maps):
         map_list.append(map.make_map())
     for i in range(len(map_list)):
-        save_map(map_list[i][0], map_list[i][1], file_name, i)
+        save_map(map_list[i][0], map_list[i][1], file_name, i + offset)
 
 
 def save_map(level_map: list, hidden_map: list, file_name: str, line_number: int):
@@ -107,6 +107,11 @@ def read_map(level_file: str, line_number):
 
     return level_list, hidden_list
 
+
+def check_for_end(level, file_name):
+    with open(file_name, 'r') as file:
+        data = file.readlines()
+    return level * 2 >= len(data)
 
 # if __name__ == '__main__':
 #     hidden = []

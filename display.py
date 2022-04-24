@@ -95,7 +95,7 @@ def make_string():
     return my_str
 
 
-def check_on_upstairs():  # I expect to put more logic here eventually
+def check_on_upstairs():
     return floor_plan[player.y_position][player.x_position] == '<'
 
 
@@ -103,18 +103,37 @@ def check_on_downstairs():
     return floor_plan[player.y_position][player.x_position] == '>'
 
 
-def move_upstairs(level):
+def move_upstairs(level):  # I expect to put more logic here eventually
     if level == 1:
         stdscr.addstr(0, 0, "Are you sure?")
         stdscr.refresh()
+        return level, False
     else:
         level -= 1
-    return level
+    return level, True
 
 
-def move_downstairs(level):
+def move_downstairs(level, file_name='dungeon.txt'):
     level += 1
-    return level
+    if dungeon.check_for_end(level - 1, file_name):
+        dungeon.make_maps(1, file_name, level - 1)
+    return level, True
+
+
+def place_player(going_down, floor_plan):
+    if going_down:
+        goal = '<'
+    else:
+        goal = '>'
+    for y in range(len(floor_plan)):
+        for x in range(len(floor_plan[0])):
+            if floor_plan[y][x] == goal:
+                return x, y
+    return -1, -1
+
+
+def place_bottom_messages():
+    stdscr.addstr(MINIMUM_WINDOW_SIZE_Y - 2, 0, "Dungeon Level: " + str(dungeon_level))
 
 
 if __name__ == '__main__':
@@ -162,7 +181,7 @@ if __name__ == '__main__':
 
         x = 'null'
 
-        player_x, player_y = make_player_coords()
+        player_x, player_y = place_player(True, floor_plan)
 
         goblin_x, goblin_y = make_monster_coords()
 
@@ -171,6 +190,10 @@ if __name__ == '__main__':
         goblin = goblin.Goblin(goblin_x, goblin_y, floor_plan, creature_list, main_window, stdscr)
 
         creature_list.append(goblin)
+
+        place_bottom_messages()
+
+        stdscr.refresh()
 
         while x != 81:
             stdscr.clear()
@@ -199,21 +222,29 @@ if __name__ == '__main__':
             elif x == 60:  # <
                 if check_on_upstairs():
                     dungeon.save_map(floor_plan, hidden, "dungeon.txt", dungeon_level - 1)
-                    dungeon_level = move_upstairs(dungeon_level)
-                    floor_plan, hidden = dungeon.read_map("dungeon.txt", dungeon_level - 1)
-                    player.change_floor_plan(floor_plan)
-                    for i in creature_list:
-                        i.change_floor_plan(floor_plan)
-                    level_string = change_level(floor_plan, hidden, level_string)
+                    dungeon_level, has_moved = move_upstairs(dungeon_level)
+                    if has_moved:
+                        floor_plan, hidden = dungeon.read_map("dungeon.txt", dungeon_level - 1)
+                        player.change_floor_plan(floor_plan)
+                        place_bottom_messages()
+                        for i in creature_list:
+                            i.change_floor_plan(floor_plan)
+                        level_string = change_level(floor_plan, hidden, level_string)
+                        player.x_position, player.y_position = place_player(False, floor_plan)
+                        stdscr.refresh()
             elif x == 62:  # >
                 if check_on_downstairs():
                     dungeon.save_map(floor_plan, hidden, "dungeon.txt", dungeon_level - 1)
-                    dungeon_level = move_downstairs(dungeon_level)
-                    floor_plan, hidden = dungeon.read_map("dungeon.txt", dungeon_level - 1)
-                    player.change_floor_plan(floor_plan)
-                    for i in creature_list:
-                        i.change_floor_plan(floor_plan)
-                    level_string = change_level(floor_plan, hidden, level_string)
+                    dungeon_level, has_moved = move_downstairs(dungeon_level)
+                    if has_moved:
+                        floor_plan, hidden = dungeon.read_map("dungeon.txt", dungeon_level - 1)
+                        player.change_floor_plan(floor_plan)
+                        place_bottom_messages()
+                        for i in creature_list:
+                            i.change_floor_plan(floor_plan)
+                        level_string = change_level(floor_plan, hidden, level_string)
+                        player.x_position, player.y_position = place_player(True, floor_plan)
+                        stdscr.refresh()
 
             # seen_tiles = player.look()
             visible_tiles = player.look(floor_plan)
@@ -237,7 +268,7 @@ if __name__ == '__main__':
 
             stdscr.addstr(0, 0, "Key pressed: " + str(x))
 
-            stdscr.addstr(MINIMUM_WINDOW_SIZE_Y - 2, 0, "Dungeon Level: " + str(dungeon_level))
+            place_bottom_messages()
 
             stdscr.refresh()
 

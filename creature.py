@@ -1,4 +1,3 @@
-# import display
 import curses
 import global_variables
 import line_of_sight
@@ -6,13 +5,12 @@ import line_of_sight
 
 def check_walls_and_doors(x, y, floor_plan):
     if x < 0 or x >= global_variables.MAIN_WINDOW_SIZE_X or y < 0 or y >= global_variables.MAIN_WINDOW_SIZE_Y \
-             or floor_plan[y][x] == '#':
+            or floor_plan[y][x] == '#':
         return False
     return True
 
 
 class Creature:
-
     BASE_LINE_OF_SIGHT = 4
     IS_PLAYER = False  # Overwritten by player, if I understand inheritance properly
     CLASS_NAME = "?"
@@ -115,7 +113,7 @@ class Creature:
     def calculate_damage(self, critter):
         return 1
 
-    def hit_wall(self):  # Designed to be called if hte player walked into a wall
+    def hit_wall(self):  # Designed to be called if the player walked into a wall
         self.screen.addstr(0, 0, "Bonk!")
         self.screen.refresh()
 
@@ -142,7 +140,7 @@ class Creature:
                 self.screen.addstr(0, 0, "You kill the " + critter.CLASS_NAME + "!")
             else:
                 self.screen.addstr(0, 0, "You hit the " + critter.CLASS_NAME + ", it has " + str(critter.current_health)
-                              + " health remaining.")
+                                   + " health remaining.")
         else:
             pass
         self.screen.refresh()

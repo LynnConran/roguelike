@@ -13,17 +13,16 @@ ROOM_MAXIMUM_Y = 8
 
 ROOM_DISTANCE = 3
 
-CORRIDOR_CHANGE_CHANCE = .2
+CORRIDOR_CHANGE_CHANCE = .3
 
 MIN_ROOMS = 7
 # NUM_ROOMS = 8
-MAX_ROOMS = 12
-
-rooms = []
+MAX_ROOMS = 16
 
 
 def make_map():
     rows = []
+    rooms = []
 
     num_rooms = random.randint(MIN_ROOMS, MAX_ROOMS)
 
@@ -47,16 +46,16 @@ def make_map():
     #     my_file.writelines(str(rows))
 
     for i in range(num_rooms):
-        place_room(rows)
+        place_room(rows, rooms)
 
-    make_corridors(rows)
+    make_corridors(rows, rooms)
 
-    place_stairs(rows)
+    place_stairs(rows, rooms)
 
     return rows, hidden
 
 
-def place_room(rows, recursive_count=0):
+def place_room(rows, rooms, recursive_count=0):
     if recursive_count > 15:
         return
 
@@ -64,7 +63,7 @@ def place_room(rows, recursive_count=0):
     room_y_length = random.randint(0, ROOM_MAXIMUM_Y - ROOM_MINIMUM_Y) + ROOM_MINIMUM_Y
 
     room_x_position = random.randint(1, MAX_X - room_x_length - 1)
-    room_y_position = random.randint(1, MAX_Y - room_y_length - 2)
+    room_y_position = random.randint(1, MAX_Y - room_y_length - 1)  # Why is this -2?
 
     if check_room(room_x_length, room_y_length, room_x_position, room_y_position, rows):
         for y in range(room_y_length):
@@ -72,11 +71,11 @@ def place_room(rows, recursive_count=0):
                 rows[y + room_y_position][x + room_x_position] = '.'
         rooms.append((room_x_position, room_y_position, room_x_length, room_y_length))
     else:
-        place_room(rows, recursive_count + 1)
+        place_room(rows, rooms, recursive_count + 1)
         # return
 
 
-def place_stairs(rows):
+def place_stairs(rows, rooms):
     up_room = random.randint(0, len(rooms) - 1)
     down_room = random.randint(0, len(rooms) - 1)
     while down_room == up_room:
@@ -99,7 +98,7 @@ def check_room(x_len, y_len, x_pos, y_pos, rows):
     return True
 
 
-def make_corridors(rows):
+def make_corridors(rows, rooms):
     for i in range(len(rooms)):
         goal_room = random.randint(0, len(rooms) - 1)
         while goal_room == i:
