@@ -1,13 +1,8 @@
 import curses
 import global_variables
 import line_of_sight
-
-
-def check_walls_and_doors(x, y, floor_plan):
-    if x < 0 or x >= global_variables.MAIN_WINDOW_SIZE_X or y < 0 or y >= global_variables.MAIN_WINDOW_SIZE_Y \
-            or floor_plan[y][x] == '#':
-        return False
-    return True
+import path_finding
+import random
 
 
 class Creature:
@@ -16,7 +11,8 @@ class Creature:
     CLASS_NAME = "?"
     BASE_HEALTH = 1
 
-    def __init__(self, x_position, y_position, floor_plan, creature_list, window, screen, character, color_pair=0):
+    def __init__(self, x_position, y_position, floor_plan, creature_list, player, window, screen, character,
+                 color_pair=0):
         self.x_position = x_position
         self.y_position = y_position
         self.floor_plan = floor_plan
@@ -26,6 +22,9 @@ class Creature:
         self.character = character
         self.color_pair = color_pair
         self.current_health = self.BASE_HEALTH
+        self.is_seen = False
+        self.player = player
+        self.path = []
 
     def move(self, x_pos, y_pos):
         self.x_position = x_pos
@@ -80,14 +79,14 @@ class Creature:
             self.move(new_x, new_y)
 
     def draw_self(self):
-        # self.window.addch(self.y_position, self.x_position, self.character)
-        # display.draw_entity(self.x_position, self.y_position, self.character, self.color_pair, self.window)
         self.window.addch(self.y_position, self.x_position, self.character, curses.color_pair(self.color_pair))
 
+    def check_walls_and_doors(self, x, y):
+        return not (x < 0 or x >= global_variables.MAIN_WINDOW_SIZE_X or y < 0
+                    or y >= global_variables.MAIN_WINDOW_SIZE_Y or self.floor_plan[y][x] == '#')
+
     def move_check(self, x, y):
-        # return display.check_walls_and_doors(x, y, self.floor_plan) \
-        #        and display.check_for_creatures(x, y, self.creature_list)
-        if not check_walls_and_doors(x, y, self.floor_plan):
+        if not self.check_walls_and_doors(x, y):
             if self.IS_PLAYER:
                 self.hit_wall()
             return False
@@ -101,6 +100,8 @@ class Creature:
         for critter in self.creature_list:
             if destination == critter.get_x_and_y():
                 return False
+        if destination == self.player.get_x_and_y():
+            return False
         return True
 
     def look(self, floor_plan):
@@ -117,8 +118,61 @@ class Creature:
         self.screen.addstr(0, 0, "Bonk!")
         self.screen.refresh()
 
-    def equals(self, critter):
-        return self.get_x_and_y() == critter.get_x_and_y()
+    def change_path(self):
+        if len(self.path) < 1 or self.path[len(self.path) - 1] != self.player.get_x_and_y():
+            self.path = path_finding.search(self.floor_plan, self.creature_list, self.player.get_x_and_y(),
+                                            self.get_x_and_y(), self.player.get_x_and_y())
+            if self.path == "Not Found":
+                self.path = []
+
+    def npc_move(self):
+        if len(self.path) >= 1:
+            coords = self.path[0]
+            if coords[0] < self.x_position:
+                if coords[1] < self.y_position:
+                    self.move_north_west()
+                elif coords[1] == self.y_position:
+                    self.move_west()
+                elif coords[1] > self.y_position:
+                    self.move_south_west()
+            elif coords[0] == self.x_position:
+                if coords[1] < self.y_position:
+                    self.move_north()
+                elif coords[1] == self.y_position:
+                    pass
+                elif coords[1] > self.y_position:
+                    self.move_south()
+            elif coords[0] > self.x_position:
+                if coords[1] < self.y_position:
+                    self.move_north_east()
+                elif coords[1] == self.y_position:
+                    self.move_east()
+                elif coords[1] > self.y_position:
+                    self.move_south_east()
+            del self.path[0]
+        else:
+            self.random_move()
+
+    def random_move(self):
+        random_number = random.random()
+        if random_number < .111:
+            self.move_north()
+        elif random_number < .222:
+            self.move_north_east()
+        elif random_number < .333:
+            self.move_east()
+        elif random_number < .444:
+            self.move_south_east()
+        elif random_number < .555:
+            pass
+        elif random_number < .666:
+            self.move_south()
+        elif random_number < .777:
+            self.move_south_west()
+        elif random_number < .888:
+            self.move_west()
+        else:
+            self.move_north_west()
 
     def die(self):
         if not self.IS_PLAYER:
@@ -150,7 +204,7 @@ class Creature:
 
     def interact(self, position):
         if self.IS_PLAYER:
-            my_creature = Creature(0, 0, [], [], 'null', 'null', '?')
+            my_creature = Creature(0, 0, [], [], 'null', 'null', 'null', '?')
             for i in self.creature_list:
                 if position == i.get_x_and_y():
                     my_creature = i
@@ -158,4 +212,12 @@ class Creature:
             self.attack(my_creature)
 
         else:
-            pass
+            if position == self.player.get_x_and_y():
+                my_creature = self.player
+            else:
+                my_creature = Creature(0, 0, [], [], 'null', 'null', 'null', '?')
+                for i in self.creature_list:
+                    if position == i.get_x_and_y():
+                        my_creature = i
+                        break
+            self.attack(my_creature)

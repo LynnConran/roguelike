@@ -187,7 +187,7 @@ if __name__ == '__main__':
 
         player = player.Player(player_x, player_y, floor_plan, creature_list, main_window, stdscr, 8)
 
-        goblin = goblin.Goblin(goblin_x, goblin_y, floor_plan, creature_list, main_window, stdscr)
+        goblin = goblin.Goblin(goblin_x, goblin_y, floor_plan, creature_list, player, main_window, stdscr)
 
         creature_list.append(goblin)
 
@@ -217,7 +217,7 @@ if __name__ == '__main__':
                 player.move_north()
             elif x == 57 or x == 117:  # = 9 or u
                 player.move_north_east()
-            elif x == 92:
+            elif x == 92:  # = \
                 level_string, hidden, = reveal_all(hidden, floor_plan, level_string)
             elif x == 60:  # <
                 if check_on_upstairs():
@@ -246,8 +246,17 @@ if __name__ == '__main__':
                         player.x_position, player.y_position = place_player(True, floor_plan)
                         stdscr.refresh()
 
+            for i in creature_list:
+                i.npc_move()
+                i.change_path()
+
             # seen_tiles = player.look()
             visible_tiles = player.look(floor_plan)
+            player.see_creatures(visible_tiles)
+
+            for y in range(MAIN_WINDOW_SIZE_Y):
+                for x in range(MAIN_WINDOW_SIZE_X):
+                    visible_tiles.append((x, y))
 
             level_string, hidden = unhide(hidden, visible_tiles, floor_plan, level_string)
 
