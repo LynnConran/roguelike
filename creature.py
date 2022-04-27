@@ -28,10 +28,13 @@ class Creature:
         self.player = player
         self.path = []
         self.target = self.player
+        self.stair_list = self.get_stair_locations()
 
     def move(self, x_pos, y_pos):
         self.x_position = x_pos
         self.y_position = y_pos
+        if self.IS_PLAYER:
+            self.check_on_stairs()
 
     def move_north(self):
         new_x = self.x_position
@@ -62,6 +65,14 @@ class Creature:
         new_y = self.y_position - 1
         if self.move_check(new_x, new_y):
             self.move(new_x, new_y)
+
+    def get_stair_locations(self):
+        stair_list = []
+        for y in range(len(self.floor_plan)):
+            for x in range(len(self.floor_plan[0])):
+                if self.floor_plan[y][x] == '<' or self.floor_plan[y][x] == '>':
+                    stair_list.append((x, y))
+        return stair_list
 
     def move_south_west(self):
         new_x = self.x_position - 1
@@ -208,6 +219,8 @@ class Creature:
     def attack(self, critter):
         damage = self.calculate_damage(critter)
         critter.current_health -= damage
+        if critter == self.player:
+            self.player.update_bottom()
         is_critter_killed = critter.current_health < 1
         if is_critter_killed:
             critter.die()
@@ -216,6 +229,14 @@ class Creature:
 
     def change_floor_plan(self, plan):
         self.floor_plan = plan
+        self.stair_list = self.get_stair_locations()
+
+    def check_on_stairs(self):
+        if self.get_x_and_y() in self.stair_list:
+            if self.floor_plan[self.y_position][self.x_position] == '<':
+                self.player.address_staircase(True)
+            else:
+                self.player.address_staircase(False)
 
     def interact(self, position):
         if self.IS_PLAYER:

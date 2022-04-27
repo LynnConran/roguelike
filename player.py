@@ -18,7 +18,7 @@ class Player(creature.Creature):
         # self.screen = screen
         self.is_seen = True
         self.top_string = ''
-        self.bottom_string = ''
+        self.bottom_messages = []
         self.update_bottom()
 
     def see_creatures(self, visible_tiles):
@@ -30,17 +30,30 @@ class Player(creature.Creature):
         # self.screen.refresh()
 
     def update_bottom(self):
-        self.bottom_string = "Dungeon Level: " + str(self.dungeon_level)
+        self.bottom_messages = []
+        self.bottom_messages.append((0, 0, "Dungeon Level: " + str(self.dungeon_level)))
+        self.bottom_messages.append((0, 30, "HP(" + str(self.current_health) + ")"))
 
     def print_strings(self):
-        # self.screen.addstr(0, 0, self.top_string)
+        # self.top.clear()
+        # self.bottom.clear()
+        # self.top.refresh()
+        # self.bottom.refresh()
         self.top.addstr(0, 0, self.top_string)
         self.top_string = ''
-        self.bottom.addstr(0, 0, self.bottom_string)
+        # self.bottom.addstr(0, 0, self.bottom_string)
+        for string in self.bottom_messages:
+            self.bottom.addstr(string[0], string[1], string[2])
         # self.screen.refresh()
         self.top.refresh()
         self.bottom.refresh()
         # self.window.refresh()
+
+    def address_staircase(self, upstairs):
+        if upstairs:
+            self.top_string += "There is an upwards staircase here. "
+        else:
+            self.top_string += "There is a downwards staircase here. "
 
     def print_attack_message(self, instigator, critter, was_kill):
         if instigator.IS_PLAYER:

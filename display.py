@@ -5,10 +5,14 @@ import random
 import goblin
 import dungeon
 
+
 MINIMUM_WINDOW_SIZE_X = global_variables.MINIMUM_WINDOW_SIZE_X
 MINIMUM_WINDOW_SIZE_Y = global_variables.MINIMUM_WINDOW_SIZE_Y
 MAIN_WINDOW_SIZE_X = global_variables.MAIN_WINDOW_SIZE_X
 MAIN_WINDOW_SIZE_Y = global_variables.MAIN_WINDOW_SIZE_Y
+
+BASE_MONSTER_PROBABILITY = .01
+
 
 stdscr = curses.initscr()
 # hidden = []
@@ -24,15 +28,15 @@ def end(scr):
     curses.endwin()
 
 
-def make_player_coords():
-    x = random.randint(0, MAIN_WINDOW_SIZE_X - 1)
-    y = random.randint(0, MAIN_WINDOW_SIZE_Y - 1)
-
-    while floor_plan[y][x] != '.':
-        x = random.randint(0, MAIN_WINDOW_SIZE_X - 1)
-        y = random.randint(0, MAIN_WINDOW_SIZE_Y - 1)
-
-    return x, y
+# def make_player_coords():
+#     x = random.randint(0, MAIN_WINDOW_SIZE_X - 1)
+#     y = random.randint(0, MAIN_WINDOW_SIZE_Y - 1)
+#
+#     while floor_plan[y][x] != '.':
+#         x = random.randint(0, MAIN_WINDOW_SIZE_X - 1)
+#         y = random.randint(0, MAIN_WINDOW_SIZE_Y - 1)
+#
+#     return x, y
 
 
 def make_monster_coords():
@@ -74,11 +78,11 @@ def reveal_all(hidden_list, floor_plan, level_string):
     return unhide(hidden_list, big_ol_list, floor_plan, level_string)
 
 
-def make_pairs():
-    curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_WHITE)
-    curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)
-    curses.init_color(curses.COLOR_CYAN, 0, 0, 1000)
-    curses.init_pair(8, curses.COLOR_CYAN, curses.COLOR_BLACK)
+# def make_pairs():
+#     curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_WHITE)
+#     curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)
+#     curses.init_color(curses.COLOR_CYAN, 0, 0, 1000)
+#     curses.init_pair(8, curses.COLOR_CYAN, curses.COLOR_BLACK)
 
 
 def game_over():
@@ -103,10 +107,25 @@ def check_on_downstairs():
     return floor_plan[player.y_position][player.x_position] == '>'
 
 
+def get_open_spaces(floor_plan):
+    open_list = []
+    for y in range(len(floor_plan)):
+        for x in range(len(floor_plan)):
+            if floor_plan[y][x] == '.':
+                open_list.append((x, y))
+
+
+def populate_dungeon(allowed_list, open_spaces, probability=BASE_MONSTER_PROBABILITY):
+    for space in open_spaces:
+        for monster in allowed_list:
+            if random.random() < probability:
+                pass  # To be solved later
+
+
 def move_upstairs(level):  # I expect to put more logic here eventually
     if level == 1:
-        stdscr.addstr(0, 0, "Are you sure?")
-        stdscr.refresh()
+        # stdscr.addstr(0, 0, "Are you sure?")
+        # stdscr.refresh()
         return level, False
     else:
         level -= 1
@@ -144,7 +163,7 @@ if __name__ == '__main__':
     stdscr.keypad(True)
     curses.start_color()
     curses.curs_set(0)
-    make_pairs()
+    # make_pairs()
 
     num_rows, num_columns = stdscr.getmaxyx()
 
