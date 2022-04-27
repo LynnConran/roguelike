@@ -3,28 +3,31 @@ import global_variables
 import line_of_sight
 import path_finding
 import random
+import math
 
 
 class Creature:
+
     BASE_LINE_OF_SIGHT = 4
     IS_PLAYER = False  # Overwritten by player, if I understand inheritance properly
     CLASS_NAME = "?"
     BASE_HEALTH = 1
+    CUSTOM_PAIR = 1
 
-    def __init__(self, x_position, y_position, floor_plan, creature_list, player, window, screen, character,
-                 color_pair=0):
+    def __init__(self, x_position, y_position, floor_plan, creature_list, player, window, character,
+                 color_code=(0, 0, 0)):
         self.x_position = x_position
         self.y_position = y_position
         self.floor_plan = floor_plan
         self.creature_list = creature_list
         self.window = window
-        self.screen = screen
         self.character = character
-        self.color_pair = color_pair
+        self.color_code = color_code
         self.current_health = self.BASE_HEALTH
         self.is_seen = False
         self.player = player
         self.path = []
+        self.target = self.player
 
     def move(self, x_pos, y_pos):
         self.x_position = x_pos
@@ -78,8 +81,14 @@ class Creature:
         if self.move_check(new_x, new_y):
             self.move(new_x, new_y)
 
+    def define_color(self):
+        curses.init_color(self.CUSTOM_PAIR, self.color_code[0], self.color_code[1], self.color_code[2])
+        curses.init_pair(self.CUSTOM_PAIR, self.CUSTOM_PAIR, curses.COLOR_BLACK)  # Color and pair number are the same
+        # in order to simplify matters
+
     def draw_self(self):
-        self.window.addch(self.y_position, self.x_position, self.character, curses.color_pair(self.color_pair))
+        self.define_color()  # When this was put in __init__, the goblin disappeared when attacked. Reasons unknown.
+        self.window.addch(self.y_position, self.x_position, self.character, curses.color_pair(self.CUSTOM_PAIR))
 
     def check_walls_and_doors(self, x, y):
         return not (x < 0 or x >= global_variables.MAIN_WINDOW_SIZE_X or y < 0
@@ -88,7 +97,7 @@ class Creature:
     def move_check(self, x, y):
         if not self.check_walls_and_doors(x, y):
             if self.IS_PLAYER:
-                self.hit_wall()
+                self.player.hit_wall()
             return False
         if not self.check_for_creatures(x, y):
             self.interact((x, y))
@@ -104,19 +113,18 @@ class Creature:
             return False
         return True
 
-    def look(self, floor_plan):
-        seen_tiles = line_of_sight.compute((self.x_position, self.y_position), self.BASE_LINE_OF_SIGHT, floor_plan)
-        return seen_tiles
+    def look(self):
+        return line_of_sight.compute((self.x_position, self.y_position), self.BASE_LINE_OF_SIGHT, self.floor_plan)
+
+    def has_seen_target(self):
+        seen_tiles = self.look()
+        return self.target.get_x_and_y() in seen_tiles
 
     def get_x_and_y(self):
         return self.x_position, self.y_position
 
     def calculate_damage(self, critter):
         return 1
-
-    def hit_wall(self):  # Designed to be called if the player walked into a wall
-        self.screen.addstr(0, 0, "Bonk!")
-        self.screen.refresh()
 
     def change_path(self):
         if len(self.path) < 1 or self.path[len(self.path) - 1] != self.player.get_x_and_y():
@@ -126,32 +134,49 @@ class Creature:
                 self.path = []
 
     def npc_move(self):
+        sees_target = False
+        if math.dist(self.get_x_and_y(), self.target.get_x_and_y()) <= self.BASE_LINE_OF_SIGHT:
+            sees_target = self.has_seen_target()
         if len(self.path) >= 1:
-            coords = self.path[0]
-            if coords[0] < self.x_position:
-                if coords[1] < self.y_position:
-                    self.move_north_west()
-                elif coords[1] == self.y_position:
-                    self.move_west()
-                elif coords[1] > self.y_position:
-                    self.move_south_west()
-            elif coords[0] == self.x_position:
-                if coords[1] < self.y_position:
-                    self.move_north()
-                elif coords[1] == self.y_position:
-                    pass
-                elif coords[1] > self.y_position:
-                    self.move_south()
-            elif coords[0] > self.x_position:
-                if coords[1] < self.y_position:
-                    self.move_north_east()
-                elif coords[1] == self.y_position:
-                    self.move_east()
-                elif coords[1] > self.y_position:
-                    self.move_south_east()
-            del self.path[0]
+            if self.target.get_x_and_y() == self.path[len(self.path) - 1]:
+                self.deliberate_move()
+            else:
+                if sees_target:
+                    self.change_path()
+                    self.deliberate_move()
+                else:
+                    self.path.clear()
+                    self.random_move()
+        elif sees_target:
+            self.change_path()
+            self.deliberate_move()
         else:
             self.random_move()
+
+    def deliberate_move(self):
+        coords = self.path[0]
+        if coords[0] < self.x_position:
+            if coords[1] < self.y_position:
+                self.move_north_west()
+            elif coords[1] == self.y_position:
+                self.move_west()
+            elif coords[1] > self.y_position:
+                self.move_south_west()
+        elif coords[0] == self.x_position:
+            if coords[1] < self.y_position:
+                self.move_north()
+            elif coords[1] == self.y_position:
+                pass
+            elif coords[1] > self.y_position:
+                self.move_south()
+        elif coords[0] > self.x_position:
+            if coords[1] < self.y_position:
+                self.move_north_east()
+            elif coords[1] == self.y_position:
+                self.move_east()
+            elif coords[1] > self.y_position:
+                self.move_south_east()
+        del self.path[0]
 
     def random_move(self):
         random_number = random.random()
@@ -184,20 +209,10 @@ class Creature:
         damage = self.calculate_damage(critter)
         critter.current_health -= damage
         is_critter_killed = critter.current_health < 1
-        if critter.current_health < 1:
+        if is_critter_killed:
             critter.die()
-        self.print_attack_message(critter, is_critter_killed)
-
-    def print_attack_message(self, critter, was_kill):
-        if self.IS_PLAYER:
-            if was_kill:
-                self.screen.addstr(0, 0, "You kill the " + critter.CLASS_NAME + "!")
-            else:
-                self.screen.addstr(0, 0, "You hit the " + critter.CLASS_NAME + ", it has " + str(critter.current_health)
-                                   + " health remaining.")
-        else:
-            pass
-        self.screen.refresh()
+        if self.is_seen:
+            self.player.print_attack_message(self, critter, is_critter_killed)
 
     def change_floor_plan(self, plan):
         self.floor_plan = plan

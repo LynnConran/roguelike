@@ -132,8 +132,8 @@ def place_player(going_down, floor_plan):
     return -1, -1
 
 
-def place_bottom_messages():
-    stdscr.addstr(MINIMUM_WINDOW_SIZE_Y - 2, 0, "Dungeon Level: " + str(dungeon_level))
+# def place_bottom_messages():
+#     stdscr.addstr(MINIMUM_WINDOW_SIZE_Y - 2, 0, "Dungeon Level: " + str(dungeon_level))
 
 
 if __name__ == '__main__':
@@ -162,7 +162,9 @@ if __name__ == '__main__':
         # curses.resizeterm(MAIN_WINDOW_SIZE_Y - 1, MAIN_WINDOW_SIZE_X)
 
     else:
-        main_window = curses.newwin(MAIN_WINDOW_SIZE_Y + 1, MAIN_WINDOW_SIZE_X, 1, 0)
+        main_window = curses.newwin(MAIN_WINDOW_SIZE_Y + 1, MAIN_WINDOW_SIZE_X, 2, 0)
+        messages_window = curses.newwin(2, MAIN_WINDOW_SIZE_X, 0, 0)
+        bottom_window = curses.newwin(10, MAIN_WINDOW_SIZE_X, MAIN_WINDOW_SIZE_Y + 2, 0)
 
         # floor_plan, hidden = map.make_map()
 
@@ -185,13 +187,15 @@ if __name__ == '__main__':
 
         goblin_x, goblin_y = make_monster_coords()
 
-        player = player.Player(player_x, player_y, floor_plan, creature_list, main_window, stdscr, 8)
+        player = player.Player(player_x, player_y, dungeon_level, floor_plan, creature_list, main_window,
+                               messages_window, bottom_window)
 
-        goblin = goblin.Goblin(goblin_x, goblin_y, floor_plan, creature_list, player, main_window, stdscr)
+        goblin = goblin.Goblin(goblin_x, goblin_y, floor_plan, creature_list, player, main_window, 1)
 
         creature_list.append(goblin)
 
-        place_bottom_messages()
+        # place_bottom_messages()
+        player.print_strings()
 
         stdscr.refresh()
 
@@ -226,11 +230,13 @@ if __name__ == '__main__':
                     if has_moved:
                         floor_plan, hidden = dungeon.read_map("dungeon.txt", dungeon_level - 1)
                         player.change_floor_plan(floor_plan)
-                        place_bottom_messages()
+                        player.print_strings()
                         for i in creature_list:
                             i.change_floor_plan(floor_plan)
                         level_string = change_level(floor_plan, hidden, level_string)
                         player.x_position, player.y_position = place_player(False, floor_plan)
+                        player.dungeon_level = dungeon_level
+                        player.update_bottom()
                         stdscr.refresh()
             elif x == 62:  # >
                 if check_on_downstairs():
@@ -239,24 +245,26 @@ if __name__ == '__main__':
                     if has_moved:
                         floor_plan, hidden = dungeon.read_map("dungeon.txt", dungeon_level - 1)
                         player.change_floor_plan(floor_plan)
-                        place_bottom_messages()
+                        player.print_strings()
                         for i in creature_list:
                             i.change_floor_plan(floor_plan)
                         level_string = change_level(floor_plan, hidden, level_string)
                         player.x_position, player.y_position = place_player(True, floor_plan)
+                        player.dungeon_level = dungeon_level
+                        player.update_bottom()
                         stdscr.refresh()
 
             for i in creature_list:
                 i.npc_move()
-                i.change_path()
+                # i.change_path()
 
             # seen_tiles = player.look()
-            visible_tiles = player.look(floor_plan)
+            visible_tiles = player.look()
             player.see_creatures(visible_tiles)
 
-            for y in range(MAIN_WINDOW_SIZE_Y):
-                for x in range(MAIN_WINDOW_SIZE_X):
-                    visible_tiles.append((x, y))
+            # for y in range(MAIN_WINDOW_SIZE_Y):
+            #     for x in range(MAIN_WINDOW_SIZE_X):
+            #         visible_tiles.append((x, y))
 
             level_string, hidden = unhide(hidden, visible_tiles, floor_plan, level_string)
 
@@ -273,11 +281,14 @@ if __name__ == '__main__':
 
             # curses.napms(5000)
 
+            player.print_strings()
+
             x = main_window.getch()
 
-            stdscr.addstr(0, 0, "Key pressed: " + str(x))
+            # stdscr.addstr(0, 0, "Key pressed: " + str(x))
 
-            place_bottom_messages()
+            # place_bottom_messages()
+            player.print_strings()
 
             stdscr.refresh()
 
