@@ -39,7 +39,10 @@ class Player(creature.Creature):
         # self.bottom.clear()
         # self.top.refresh()
         # self.bottom.refresh()
-        self.top.addstr(0, 0, self.top_string)
+        if len(self.top_string) < global_variables.MAIN_WINDOW_SIZE_X * 2:
+            self.top.addstr(0, 0, self.top_string)
+        else:
+            self.top.addstr(0, 0, self.top_string[:global_variables.MAIN_WINDOW_SIZE_X * 2 - 1])
         self.top_string = ''
         # self.bottom.addstr(0, 0, self.bottom_string)
         for string in self.bottom_messages:

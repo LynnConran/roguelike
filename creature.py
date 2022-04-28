@@ -160,7 +160,8 @@ class Creature:
                     self.random_move()
         elif sees_target:
             self.change_path()
-            self.deliberate_move()
+            if len(self.path) >= 1:  # In case they see the player but can't reach them
+                self.deliberate_move()
         else:
             self.random_move()
 
@@ -230,6 +231,9 @@ class Creature:
     def change_floor_plan(self, plan):
         self.floor_plan = plan
         self.stair_list = self.get_stair_locations()
+
+    def change_entity_list(self, entities):
+        self.creature_list = entities
 
     def check_on_stairs(self):
         if self.get_x_and_y() in self.stair_list:

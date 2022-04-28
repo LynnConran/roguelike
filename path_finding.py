@@ -4,7 +4,7 @@ import global_variables
 
 
 def search(floor_plan, entity_list, player_position, start, end):
-    return __make_path(__a_star_search(MyGraph(floor_plan, entity_list, player_position), start, end))
+    return __make_path(__a_star_search(MyGraph(floor_plan, entity_list, player_position, end), start, end))
 
 
 def __make_path(cell):
@@ -19,27 +19,27 @@ def __make_path(cell):
 
 class MyGraph:
 
-    def __init__(self, floor_plan, entity_list, player_position):
+    def __init__(self, floor_plan, entity_list, player_position, target):
         self.floor_plan = floor_plan
         self.entity_list = entity_list
         self.player_position = player_position
+        self.target = target
 
     def __check_walls_and_doors(self, x, y):  # Returns True if valid
         return not (x < 0 or x >= global_variables.MAIN_WINDOW_SIZE_X or y < 0
                     or y >= global_variables.MAIN_WINDOW_SIZE_Y or self.floor_plan[y][x] == '#')
 
-    # def __check_for_critters(self, x, y):
-    #     position = (x, y)
-    #     for i in self.entity_list:
-    #         if position == i.get_x_and_y():
-    #             return True
-    #     if position == self.player_position:
-    #         return True
-    #     return False
+    def __check_for_critters(self, x, y):
+        position = (x, y)
+        for i in self.entity_list:
+            if position == i.get_x_and_y() and position != self.target:
+                return True
+        if position == self.player_position and position != self.target:
+            return True
+        return False
 
     def check_valid(self, x, y):
-        return self.__check_walls_and_doors(x, y)
-               # and not self.__check_for_critters(x, y)
+        return self.__check_walls_and_doors(x, y) and not self.__check_for_critters(x, y)
 
 
 class Cell:

@@ -4,17 +4,18 @@ import player
 import random
 import goblin
 import dungeon
-
+import spawner
 
 MINIMUM_WINDOW_SIZE_X = global_variables.MINIMUM_WINDOW_SIZE_X
 MINIMUM_WINDOW_SIZE_Y = global_variables.MINIMUM_WINDOW_SIZE_Y
 MAIN_WINDOW_SIZE_X = global_variables.MAIN_WINDOW_SIZE_X
 MAIN_WINDOW_SIZE_Y = global_variables.MAIN_WINDOW_SIZE_Y
 
-BASE_MONSTER_PROBABILITY = .01
-
+BASE_MONSTER_PROBABILITY = .02
 
 stdscr = curses.initscr()
+
+
 # hidden = []
 # floor_plan = map.make_map()
 
@@ -65,7 +66,7 @@ def unhide(hidden_list, seen_tiles, floor_plan, level_string):
     for i in seen_tiles:
         if not hidden_list[i[1]][i[0]]:
             index = i[1] * MAIN_WINDOW_SIZE_X + i[0]
-            level_string = level_string[:index] + floor_plan[i[1]][i[0]] + level_string[index+1:]
+            level_string = level_string[:index] + floor_plan[i[1]][i[0]] + level_string[index + 1:]
             hidden_list[i[1]][i[0]] = True
     return level_string, hidden_list
 
@@ -85,8 +86,8 @@ def reveal_all(hidden_list, floor_plan, level_string):
 #     curses.init_pair(8, curses.COLOR_CYAN, curses.COLOR_BLACK)
 
 
-def game_over():
-    stdscr.addstr(0, 0, "Lmao, you literally died")
+# def game_over():
+#     stdscr.addstr(0, 0, "Lmao, you literally died")
 
 
 def make_string():
@@ -110,16 +111,19 @@ def check_on_downstairs():
 def get_open_spaces(floor_plan):
     open_list = []
     for y in range(len(floor_plan)):
-        for x in range(len(floor_plan)):
+        for x in range(len(floor_plan[0])):
             if floor_plan[y][x] == '.':
                 open_list.append((x, y))
+    return open_list
 
 
-def populate_dungeon(allowed_list, open_spaces, probability=BASE_MONSTER_PROBABILITY):
+def populate_dungeon(allowed_list: dict, open_spaces, floor_plan, creature_list, player, window,
+                     probability=BASE_MONSTER_PROBABILITY):
     for space in open_spaces:
         for monster in allowed_list:
             if random.random() < probability:
-                pass  # To be solved later
+                creature_list.append(spawner.create(monster, space[0], space[1], floor_plan, creature_list, player,
+                                                    window, allowed_list[monster]))
 
 
 def move_upstairs(level):  # I expect to put more logic here eventually
@@ -209,12 +213,19 @@ if __name__ == '__main__':
         player = player.Player(player_x, player_y, dungeon_level, floor_plan, creature_list, main_window,
                                messages_window, bottom_window)
 
-        goblin = goblin.Goblin(goblin_x, goblin_y, floor_plan, creature_list, player, main_window, 1)
-
-        creature_list.append(goblin)
+        # goblin = goblin.Goblin(goblin_x, goblin_y, floor_plan, creature_list, player, main_window, 1)
+        #
+        # creature_list.append(goblin)
 
         # place_bottom_messages()
         player.print_strings()
+
+        creature_dict = {'goblin': 2}  # Eventually I'll do this differently somehow
+
+        populate_dungeon(creature_dict, get_open_spaces(floor_plan), floor_plan, creature_list, player, main_window)
+
+        # for i in creature_list:
+        #     i.change_entity_list(creature_list)
 
         stdscr.refresh()
 
@@ -222,7 +233,7 @@ if __name__ == '__main__':
             stdscr.clear()
             main_window.clear()
 
-            if x == 49 or x == 98:    # = 1 or n
+            if x == 49 or x == 98:  # = 1 or n
                 player.move_south_west()
             elif x == 50 or x == 106:  # = 2 or j
                 player.move_south()
